@@ -25,6 +25,9 @@ import (
 	"github.com/docker/machine/libmachine/host"
 	"github.com/docker/machine/libmachine/log"
 	"github.com/docker/machine/libmachine/mcnerror"
+	"github.com/docker/machine/libmachine/mcnutils"
+	"github.com/docker/machine/libmachine/cert"
+	"github.com/docker/machine/libmachine/provision"
 	"github.com/docker/machine/libmachine/mcnflag"
 	"github.com/docker/machine/libmachine/swarm"
 )
@@ -41,6 +44,37 @@ var (
 			Value:  "virtualbox",
 			EnvVar: "MACHINE_DRIVER",
 		},
+		cli.IntFlag{
+			Name:   "sync-attempts",
+			Usage:  "Attempts in communications with docker",
+			Value:  60,
+		},
+		cli.IntFlag{
+			Name:   "sync-tick",
+			Usage:  "Attempt duration in communications with docker (sec)",
+			Value:  3,
+		},
+		cli.IntFlag{
+			Name:   "prov-sync-attempts",
+			Usage:  "Attempts waiting provision from docker",
+			Value:  10,
+		},
+		cli.IntFlag{
+			Name:   "prov-sync-tick",
+			Usage:  "Attempt duration in provision waiting (sec)",
+			Value:  3,
+		},
+		cli.IntFlag{
+			Name:   "tls-ver-attempts",
+			Usage:  "Attempts verifying TLS cert",
+			Value:  10,
+		},
+		cli.IntFlag{
+			Name:   "tls-ver-tick",
+			Usage:  "Attempt timeout in verifying TLS cert (sec)",
+			Value:  10,
+		},
+
 		cli.StringFlag{
 			Name:   "engine-install-url",
 			Usage:  "Custom URL to use for engine installation",
@@ -161,7 +195,12 @@ func cmdCreateInner(c CommandLine, api libmachine.API) error {
 	if err != nil {
 		return fmt.Errorf("Error attempting to marshal bare driver data: %s", err)
 	}
-
+	mcnutils.Attempts = c.Int("sync-attempts")
+	mcnutils.Tick = c.Int("sync-tick")
+	provision.Attempts = c.Int("prov-sync-attempts")
+	provision.Tick = c.Int("prov-sync-tick")
+	cert.Attempts = c.Int("tls-ver-attempts")
+	cert.Tick = c.Int("tls-ver-tick")
 	driverName := c.String("driver")
 	h, err := api.NewHost(driverName, rawDriver)
 	if err != nil {

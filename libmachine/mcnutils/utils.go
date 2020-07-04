@@ -9,8 +9,10 @@ import (
 	"runtime"
 	"strconv"
 	"time"
+	"github.com/docker/machine/libmachine/log"
 )
-
+var Tick int
+var Attempts int
 type MultiError struct {
 	Errs []error
 }
@@ -79,7 +81,9 @@ func CopyFile(src, dst string) error {
 }
 
 func WaitForSpecificOrError(f func() (bool, error), maxAttempts int, waitInterval time.Duration) error {
+	log.Debug("Attempts ",maxAttempts," each of duration ",waitInterval) 
 	for i := 0; i < maxAttempts; i++ {
+		log.Debug("Attempt:",i)
 		stop, err := f()
 		if err != nil {
 			return err
@@ -99,7 +103,7 @@ func WaitForSpecific(f func() bool, maxAttempts int, waitInterval time.Duration)
 }
 
 func WaitFor(f func() bool) error {
-	return WaitForSpecific(f, 60, 3*time.Second)
+	return WaitForSpecific(f, Attempts, time.Duration(Tick)*time.Second)
 }
 
 // TruncateID returns a shorten id

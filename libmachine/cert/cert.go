@@ -21,6 +21,9 @@ import (
 
 var defaultGenerator = NewX509CertGenerator()
 
+var Tick int
+var Attempts int
+
 type Options struct {
 	Hosts                                     []string
 	CertFile, KeyFile, CAFile, CAKeyFile, Org string
@@ -255,12 +258,21 @@ func (xcg *X509CertGenerator) ValidateCertificate(addr string, authOptions *auth
 	if err != nil {
 		return false, err
 	}
+	duration := time.Duration(Tick)
+	tmout := duration
 
-	dialer := &net.Dialer{
-		Timeout: time.Second * 20,
+	log.Debug("Attempts ",Attempts," each of duration ",Tick) 
+	for i := 0; i < Attempts; i++ {
+		tmout = tmout + duration
+		log.Debug("Attempt:",i," Timeout ",tmout)
+		dialer := &net.Dialer{
+		Timeout: time.Second * tmout,
+		}
+		_, err = tls.DialWithDialer(dialer, "tcp", addr, tlsConfig)
+		if err == nil { break }
+		//time.Sleep(Tick)
 	}
 
-	_, err = tls.DialWithDialer(dialer, "tcp", addr, tlsConfig)
 	if err != nil {
 		return false, err
 	}

@@ -24,6 +24,9 @@ type DockerOptions struct {
 	EngineOptionsPath string
 }
 
+var Tick int
+var Attempts int
+
 func installDockerGeneric(p Provisioner, baseURL string) error {
 	// install docker - until cloudinit we use ubuntu everywhere so we
 	// just install it using the docker repos
@@ -266,7 +269,7 @@ func checkDaemonUp(p Provisioner, dockerPort int) func() bool {
 }
 
 func WaitForDocker(p Provisioner, dockerPort int) error {
-	if err := mcnutils.WaitForSpecific(checkDaemonUp(p, dockerPort), 10, 3*time.Second); err != nil {
+	if err := mcnutils.WaitForSpecific(checkDaemonUp(p, dockerPort), Attempts, time.Duration(Tick)*time.Second); err != nil {
 		return NewErrDaemonAvailable(err)
 	}
 
