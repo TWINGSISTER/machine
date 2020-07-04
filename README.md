@@ -1,4 +1,48 @@
-# Docker Machine
+# Docker Machine (Twingsister fork with timeouts control)
+
+This fork introduce six options for the ``docker-machine create`` to control timeouts hardwired in the original code. 
+
+These fixed timeouts cause Docker Machine to say goodbye whenever Docker is too slow to come up on the VM.  This is particularly disturbing when trying to create a Docker instance on a QEmu VM without virtualization support.  Unfortunately this is the only way to run Docker on Windows without Admin privileges. 
+
+This is just what you need when you try to teach containers and drop into a school where, as usual, you do not have Admin privileges for the PCs in the labo. Let alone the other common scenario of you with your USB key and without your laptop fixing your containers in an Internet Café. 
+
+These six new options controls, during the VM creation, how docker-machine wait for Docker to respond. 
+
+Usually docker-machine performs a certan number of communication attempts. After every failed attempt some time is spent sleeping waiting for the next attempt. 
+
+So, for instance, the default option assignment `` -prov-sync-attempts 10   --prov-sync-tick 3`` makes docker-machine to try ten times, waiting for 3  seconds after each failed attempt. Obviously the first successful attempt ends the procedure and the command proceeds. 
+
+Actually there are (at least afaik) three situations where more time is needed. You can see all the options with a ``docker-machine create --help`` and you can see the trace of all attempts running docker-machine in debug mode. ``docker-machine -D create ``. 
+
+The three trouble spots are: waiting for Docker to accept a SSH connection. This now an be controlled with options
+
+```   
+   --sync-attempts "60"
+        Attempts in communications with docker
+   --sync-tick "3"
+        Attempt duration in communications with docker (sec)
+```
+then waiting for Docker to listen on tcp port
+
+```
+   --prov-sync-attempts "10"
+        Attempts waiting provision from docker
+   --prov-sync-tick "3"
+        Attempt duration in provision waiting (sec)
+```
+then waiting to establish a TLS connection 
+
+```
+   --tls-ver-attempts "10"
+        Attempts verifying TLS cert
+   --tls-ver-tick "10"
+        Attempt duration in provision waiting (sec)
+```
+The latter option ``tls-ver-tick`` is used in a slightly different way w.r.t. other ticks. This controls a timeout. 
+
+In this case, somehow, the problem is not that the Docker on the VM is late to come up and is doing something  else. It seems that establishing  a TLS connection (do we really always need TLS?) is always too long.
+
+Therefore, e.g. for ``--tls-ver-tick 10``, the behaviour will be first attempts with a 10 seconds timeout, then, second attempts with a 20 seconds  timeout, then, third attempts with a 30 seconds  timeout and so on.
 
 ![](https://docs.docker.com/machine/img/logo.png)
 
