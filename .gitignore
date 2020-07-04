@@ -1,5 +1,6 @@
 *.log
 *.iml
 .idea/
-/bin/
+# bin admitted uncomment below not to  distribute binaries
+# /bin/
 cover
